@@ -1,0 +1,73 @@
+from abc import ABC, abstractmethod
+
+# اینترفیس حالت (State)
+class ElevatorState(ABC):
+    @abstractmethod
+    def handle_request(self, context, requested_floor):
+        pass
+
+# Context آسانسور که حالت فعلی رو نگه می‌داره
+class Elevator:
+    def __init__(self, max_floor):
+        self.max_floor = max_floor
+        self.min_floor = 0
+        self.current_floor = 0
+        self.state = IdleState()
+
+    def set_state(self, state):
+        self.state = state
+
+    def request_floor(self, floor):
+        if floor < self.min_floor or floor > self.max_floor:
+            print(f"❌ درخواست طبقه {floor} نامعتبر است!")
+            return
+        self.state.handle_request(self, floor)
+
+# حالت Idle (آسانسور در حالت آماده به کار است)
+class IdleState(ElevatorState):
+    def handle_request(self, context, requested_floor):
+        print(f"🚪 آسانسور آماده است، حرکت به طبقه {requested_floor}")
+        if requested_floor > context.current_floor:
+            context.set_state(MovingUpState())
+        elif requested_floor < context.current_floor:
+            context.set_state(MovingDownState())
+        else:
+            print("شما هم‌اکنون در طبقه مورد نظر هستید.")
+            return
+        context.state.handle_request(context, requested_floor)
+
+# حالت حرکت به سمت بالا
+class MovingUpState(ElevatorState):
+    def handle_request(self, context, requested_floor):
+        while context.current_floor < requested_floor:
+            context.current_floor += 1
+            print(f"⬆️ آسانسور به طبقه {context.current_floor} رسید")
+            if context.current_floor == context.max_floor:
+                print("⚠️ رسیدن به بالاترین طبقه، تغییر حالت به Idle")
+                context.set_state(IdleState())
+                return
+        print("🚪 آسانسور توقف کرد")
+        context.set_state(IdleState())
+
+# حالت حرکت به سمت پایین
+class MovingDownState(ElevatorState):
+    def handle_request(self, context, requested_floor):
+        while context.current_floor > requested_floor:
+            context.current_floor -= 1
+            print(f"⬇️ آسانسور به طبقه {context.current_floor} رسید")
+            if context.current_floor == context.min_floor:
+                print("⚠️ رسیدن به پایین‌ترین طبقه، تغییر حالت به Idle")
+                context.set_state(IdleState())
+                return
+        print("🚪 آسانسور توقف کرد")
+        context.set_state(IdleState())
+
+# استفاده از آسانسور
+if __name__ == "__main__":
+    elevator = Elevator(max_floor=10)
+
+    elevator.request_floor(5)
+    elevator.request_floor(8)
+    elevator.request_floor(2)
+    elevator.request_floor(11)  # نامعتبر است
+    elevator.request_floor(0)
