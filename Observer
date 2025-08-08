@@ -1,0 +1,69 @@
+from abc import ABC, abstractmethod
+
+# رابط Observer (ناظر)
+class Observer(ABC):
+    @abstractmethod
+    def update(self, state):
+        pass
+
+# Subject یا همان دستگاه که حالتش رو نگه می‌داره و به ناظرها اطلاع میده
+class DeviceStateManager:
+    def __init__(self):
+        self._observers = []
+        self._state = None
+
+    def register(self, observer):
+        self._observers.append(observer)
+
+    def unregister(self, observer):
+        self._observers.remove(observer)
+
+    def notify_observers(self):
+        for observer in self._observers:
+            observer.update(self._state)
+
+    def set_state(self, state):
+        self._state = state
+        print(f"\n🟢 حالت دستگاه تغییر کرد به: {self._state}")
+        self.notify_observers()
+
+# ناظرهای مختلفی که به تغییر حالت دستگاه واکنش نشون میدن
+class Logger(Observer):
+    def update(self, state):
+        print(f"[لاگ] دستگاه حالا در حالت: {state} است.")
+
+class Display(Observer):
+    def update(self, state):
+        print(f"[نمایشگر] نمایش وضعیت جدید: {state}")
+
+class AlertSystem(Observer):
+    def update(self, state):
+        if state == "فعال":
+            print("[هشدار] دستگاه فعال شده، سیستم هشدار روشن شد.")
+        elif state == "غیرفعال":
+            print("[هشدار] دستگاه غیرفعال است، هشدارها خاموش شدند.")
+        else:
+            print("[هشدار] وضعیت دستگاه تغییر کرد.")
+
+# استفاده
+if __name__ == "__main__":
+    device = DeviceStateManager()
+
+    logger = Logger()
+    display = Display()
+    alert = AlertSystem()
+
+    # ثبت ناظرها
+    device.register(logger)
+    device.register(display)
+    device.register(alert)
+
+    # تغییر حالت دستگاه
+    device.set_state("فعال")
+    device.set_state("استراحت")
+    device.set_state("غیرفعال")
+
+    # حذف یک ناظر
+    device.unregister(alert)
+
+    device.set_state("فعال")
